@@ -1,0 +1,27 @@
+# KyberShield Client Management API - Python Dependencies
+# Client onboarding, authentication, and service configuration
+
+# Core web framework
+flask==2.3.3
+flask-cors==4.0.0
+gunicorn==21.2.0
+
+# Authentication and security
+pyjwt==2.8.0
+bcrypt==4.0.1
+cryptography==41.0.4
+
+# Database
+sqlite3  # Built into Python, but listing for clarity
+
+# HTTP requests
+requests==2.31.0
+
+# Configuration and environment
+python-dotenv==1.0.0
+
+# Logging and monitoring
+structlog==23.1.0
+
+# UUID and datetime utilities (built-in)
+# uuid, datetime, hashlib, base64, time, json

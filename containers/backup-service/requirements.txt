@@ -1,0 +1,21 @@
+# KyberShield Backup Service - Python Dependencies
+# ChaCha20-Poly1305 quantum-resistant encryption
+
+# Core web framework
+flask==2.3.3
+gunicorn==21.2.0
+
+# Quantum and encryption libraries
+liboqs-python==0.14.1
+cryptography==41.0.4
+pycryptodome==3.19.0
+
+# Database and cloud storage
+psycopg2-binary==2.9.7
+boto3==1.34.0
+
+# HTTP and networking
+requests==2.31.0
+
+# Scheduling and utilities
+schedule==1.2.0

@@ -1,0 +1,16 @@
+.git/
+.github/
+*.git*
+.DS_Store
+*.log
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+.nyc_output
+coverage/
+*.tmp
+*.temp

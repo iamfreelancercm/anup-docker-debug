@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: kybershield-postgres
+    environment:
+      POSTGRES_DB: kybershield
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password_change_me}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database-security/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - kybershield-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d kybershield"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  firewall:
+    build: ./firewall
+    container_name: kybershield-firewall
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://admin:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/kybershield
+      - JWT_SECRET=${JWT_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NODE_ENV=${NODE_ENV:-development}
+    volumes:
+      - ./firewall:/app
+      - /app/node_modules
+    networks:
+      - kybershield-network
+    restart: unless-stopped
+
+  database-security:
+    build: ./database-security
+    container_name: kybershield-db-security
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://admin:${DB_PASSWORD:-secure_password_change_me}@postgres:5432/kybershield
+      - MASTER_KEY=${MASTER_KEY}
+      - FLASK_SECRET=${FLASK_SECRET}
+      - BACKUP_ENCRYPTION_KEY=${BACKUP_ENCRYPTION_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - FLASK_ENV=${FLASK_ENV:-development}
+    volumes:
+      - ./database-security:/app
+      - ./secure_backups:/secure_backups
+      - backup_data:/var/lib/kybershield/backups
+    networks:
+      - kybershield-network
+    restart: unless-stopped
+
+  # Rosenpass container for post-quantum VPN integration
+  rosenpass:
+    build: 
+      context: ./rosenpass
+      dockerfile: Dockerfile
+    container_name: kybershield-rosenpass
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    ports:
+      - "9999:9999/udp"  # Rosenpass key exchange port
+    environment:
+      - ROSENPASS_PRIVATE_KEY=/etc/rosenpass/pqsk
+      - ROSENPASS_PUBLIC_KEY=/etc/rosenpass/pqpk
+      - ROSENPASS_CONFIG_PATH=/etc/rosenpass/config.toml
+      - ROSENPASS_LOG_LEVEL=info
+    volumes:
+      - ./rosenpass/config:/etc/rosenpass
+      - rosenpass_keys:/etc/rosenpass/keys
+      - wireguard_config:/etc/wireguard
+    networks:
+      - kybershield-network
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "rosenpass", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    profiles:
+      - quantum
+
+  # Optional: Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: kybershield-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD:-change_me_redis_password}
+    volumes:
+      - redis_data:/data
+    networks:
+      - kybershield-network
+    restart: unless-stopped
+    profiles:
+      - cache
+
+volumes:
+  postgres_data:
+    driver: local
+  backup_data:
+    driver: local
+  redis_data:
+    driver: local
+  rosenpass_keys:
+    driver: local
+  wireguard_config:
+    driver: local
+
+networks:
+  kybershield-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

@@ -1,0 +1,19 @@
+# KyberShield Rosenpass Internal VPN - Python Dependencies
+# ML-KEM-768 quantum tunnel for internal service communication
+
+# Core web framework
+flask==2.3.3
+gunicorn==21.2.0
+
+# Quantum cryptography (ML-KEM-768)
+liboqs-python==0.14.1
+cryptography==41.0.4
+
+# HTTP and networking
+requests==2.31.0
+
+# Configuration and environment
+python-dotenv==1.0.0
+
+# Logging
+structlog==23.1.0
