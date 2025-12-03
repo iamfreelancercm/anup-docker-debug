@@ -1,6 +1,6 @@
 # Multi-stage build for KyberShield Quantum Firewall
 FROM python:3.11-slim AS builder
-
+ENV DEBIAN_FRONTEND=noninteractive
 LABEL maintainer="KyberShield Security Team"
 LABEL description="Quantum Firewall with Real ML-DSA-87 Signatures - Builder Stage"
 
@@ -15,13 +15,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Build liboqs from source (matching liboqs-python version)
-RUN git clone --depth 1 --branch 0.11.0 https://github.com/open-quantum-safe/liboqs.git /src/liboqs \
+RUN git clone --depth 1 --branch 0.14.0 https://github.com/open-quantum-safe/liboqs.git /src/liboqs \
     && cmake -S /src/liboqs -B /src/liboqs/build -GNinja -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/usr/local \
     && ninja -C /src/liboqs/build install
 
 # Runtime stage
 FROM python:3.11-slim
-
+ENV DEBIAN_FRONTEND=noninteractive
 LABEL maintainer="KyberShield Security Team"
 LABEL description="Quantum Firewall with Real ML-DSA-87 Signatures"
 LABEL build.stage="runtime"
@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl3 \
     ca-certificates \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy compiled liboqs libraries from builder stage
@@ -38,7 +39,7 @@ COPY --from=builder /usr/local /usr/local
 
 # Set library path for liboqs
 ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH:-}"
-
+RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/liboqs.conf && ldconfig
 # Set working directory
 WORKDIR /app
 

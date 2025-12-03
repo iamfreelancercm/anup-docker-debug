@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Build liboqs from source (needed for any quantum features)
-RUN git clone --depth 1 --branch 0.10.1 https://github.com/open-quantum-safe/liboqs.git /src/liboqs \
+RUN git clone --depth 1 --branch 0.14.0 https://github.com/open-quantum-safe/liboqs.git /src/liboqs \
     && cmake -S /src/liboqs -B /src/liboqs/build -GNinja -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/usr/local \
     && ninja -C /src/liboqs/build install
 
@@ -34,6 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl3 \
     ca-certificates \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy compiled liboqs libraries from builder stage  
@@ -41,7 +42,7 @@ COPY --from=builder /usr/local /usr/local
 
 # Set library path for liboqs
 ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH:-}"
-
+RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/liboqs.conf && ldconfig
 # Create app user with minimal privileges
 RUN useradd -r -s /bin/false -d /app backupuser
 

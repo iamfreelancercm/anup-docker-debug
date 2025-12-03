@@ -1,6 +1,6 @@
 # KyberShield Client Management API
 FROM python:3.11-slim
-
+ENV DEBIAN_FRONTEND=noninteractive
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -34,7 +34,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 ENV PYTHONPATH=/app
 ENV FLASK_APP=app.py
 ENV CLIENT_API_ENABLED=true
-ENV JWT_SECRET_KEY=your-production-jwt-secret
+#ENV JWT_SECRET_KEY=your-production-jwt-secret
 
 # Run application
 CMD ["python", "app.py"]

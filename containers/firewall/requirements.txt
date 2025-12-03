@@ -6,7 +6,7 @@ flask==2.3.3
 gunicorn==21.2.0
 
 # Quantum cryptography (ML-DSA-87)
-liboqs-python==0.11.0
+liboqs-python==0.14.1
 cryptography==41.0.4
 
 # AI and machine learning

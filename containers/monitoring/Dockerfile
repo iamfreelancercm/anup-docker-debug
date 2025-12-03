@@ -1,5 +1,5 @@
 FROM python:3.11-slim
-
+ENV DEBIAN_FRONTEND=noninteractive
 LABEL maintainer="KyberShield Security Team"
 LABEL description="Quantum Security Monitoring Dashboard"
 

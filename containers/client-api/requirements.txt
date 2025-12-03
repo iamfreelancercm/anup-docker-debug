@@ -12,7 +12,7 @@ bcrypt==4.0.1
 cryptography==41.0.4
 
 # Database
-sqlite3  # Built into Python, but listing for clarity
+#sqlite3  # Built into Python, but listing for clarity
 
 # HTTP requests
 requests==2.31.0
