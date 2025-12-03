@@ -1,0 +1,50 @@
+name: Container Build Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-containers:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        container: [database, firewall, backup-service, rosenpass, monitoring, client-api]
+        
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Build ${{ matrix.container }} container
+      run: |
+        cd containers/${{ matrix.container }}
+        docker build -t kybershield-${{ matrix.container }}:test .
+        
+    - name: Test container startup
+      run: |
+        # Quick smoke test - container should start without immediate crash
+        docker run --rm -d --name test-${{ matrix.container }} kybershield-${{ matrix.container }}:test
+        sleep 5
+        # Check if container is still running (not crashed)
+        docker ps | grep test-${{ matrix.container }} || exit 1
+        docker stop test-${{ matrix.container }}
+
+  build-compose:
+    runs-on: ubuntu-latest
+    needs: build-containers
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Test docker-compose build
+      run: |
+        docker-compose build
+        
+    - name: Test docker-compose startup
+      run: |
+        docker-compose up -d
+        sleep 10
+        docker-compose ps
+        docker-compose down
